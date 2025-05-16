@@ -3,13 +3,12 @@
     "version": "1.0.0",
     "description": "Template for the WebSocket remote control task",
     "main": "index.js",
-    "type": "module",
     "scripts": {
         "start": "node ./index.js",
         "start:dev": "nodemon ./index.js & npm run start:back",
-        "start:back": "nodemon --exec node --no-warnings=ExperimentalWarning  --loader ts-node/esm back/server.ts",
+        "start:back": "cross-env NODE_ENV=development ts-node-dev --respawn --transpile-only back/server.ts",
         "lint": "eslint \"back/**/*.{ts,js}\" --fix",
-        "format": "prettier --write \"src/**/*.{ts,js,json,md}\"",
+        "format": "prettier --write \"back/**/*.{ts,js,json,md}\"",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "author": "Andrei Auchynnikau, YaroslavaGD",
