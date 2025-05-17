@@ -7,22 +7,25 @@ const rooms: Room[] = [];
 export function createRoom(user: RoomUser): Room {
   const room: Room = {
     roomId: roomCounter++,
-    users: [user],
+    roomUsers: [user],
   };
   rooms.push(room);
+  console.log('rooms state = ', rooms);
   return room;
 }
 
 export function addUserToRoom(roomId: number, user: RoomUser): Room | null {
-  const room = rooms.find((r) => r.roomId === roomId && r.users.length === 1);
+  console.log('rooms state = ', rooms);
+  const room = rooms.find((r) => r.roomId === roomId && r.roomUsers.length === 1);
+  console.log('room = ', room);
   if (!room) return null;
 
-  room.users.push(user);
+  room.roomUsers.push(user);
   return room;
 }
 
 export function getAvailableRooms(): Room[] {
-  return rooms.filter((r) => r.users.length === 1);
+  return rooms.filter((r) => r.roomUsers.length === 1);
 }
 
 export function removeRoom(roomId: number) {
