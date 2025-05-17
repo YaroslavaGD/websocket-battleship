@@ -1,7 +1,14 @@
 import { WebSocket, WebSocketServer } from 'ws';
-import { getAllWinners, registerPlayer } from './services/player.service';
-import { broadcastAll, playerIndexToWsMap, respond, wsToPlayerMap } from './utils';
+import { getAllWinners, registerOrLoginPlayer } from './services/player.service';
+import { broadcastAll, respond } from './utils';
 import { addUserToRoom, createRoom, getAvailableRooms, removeRoom } from './services/room.service';
+import {
+  addSession,
+  getSessionBySocket,
+  getSocketByIndex,
+  isPlayerConnected,
+  removeSessionBySocket,
+} from './services/session.service';
 
 const REQUEST_TYPE = {
   REG: 'reg',
@@ -24,42 +31,43 @@ wss.on('connection', (ws: WebSocket) => {
 
       if (type === REQUEST_TYPE.REG) {
         const { name, password } = JSON.parse(data || {});
-        const player = registerPlayer(name, password);
-        if (!player) ws.send(respond.regError('Player already exists'));
-
-        if (player) {
-          wsToPlayerMap.set(ws, { name: player.name, index: player.index });
-          playerIndexToWsMap.set(player.index, ws);
-          ws.send(respond.regOk(player));
-          broadcastAll(wss, respond.updateWinners(getAllWinners()));
-          broadcastAll(wss, respond.updateRoom(getAvailableRooms()));
+        if (isPlayerConnected(name)) {
+          ws.send(respond.regError('User already connected'));
+          return;
         }
+
+        const player = registerOrLoginPlayer(name, password);
+        if (!player) {
+          ws.send(respond.regError('Incorrect password'));
+          return;
+        }
+
+        addSession(player.name, player.index, ws);
+        ws.send(respond.regOk(player));
+        broadcastAll(wss, respond.updateWinners(getAllWinners()));
+        broadcastAll(wss, respond.updateRoom(getAvailableRooms()));
       }
 
       if (type === REQUEST_TYPE.CREATE_ROOM) {
-        const player = wsToPlayerMap.get(ws);
-        console.log('create_room from player ', player);
-        if (!player) return;
+        const session = getSessionBySocket(ws);
+        if (!session) return;
 
-        createRoom(player);
+        createRoom({ name: session.name, index: session.index });
         broadcastAll(wss, respond.updateRoom(getAvailableRooms()));
       }
 
       if (type === REQUEST_TYPE.ADD_USER_TO_ROOM) {
         const { indexRoom } = JSON.parse(data || {});
-        const player = wsToPlayerMap.get(ws);
+        const session = getSessionBySocket(ws);
+        if (!session) return;
 
-        console.log('add_to_room from player ', player);
-        console.log('add_to_room in indexRoom  ', indexRoom);
-        if (!player) return;
+        const room = addUserToRoom(indexRoom, { name: session.name, index: session.index });
 
-        const room = addUserToRoom(indexRoom, player);
-        console.log('user 2 in room: ', room);
         if (room && room.roomUsers.length === 2) {
           const idGame = `game-${Date.now()}`;
 
           room.roomUsers.forEach((user) => {
-            const client = playerIndexToWsMap.get(user.index);
+            const client = getSocketByIndex(user.index);
             if (client) {
               client.send(respond.createGame(idGame, user.index));
             }
@@ -77,10 +85,6 @@ wss.on('connection', (ws: WebSocket) => {
 
   ws.on('close', () => {
     console.log('Player disconnected');
-    const player = wsToPlayerMap.get(ws);
-    if (player) {
-      wsToPlayerMap.delete(ws);
-      playerIndexToWsMap.delete(player.index);
-    }
+    removeSessionBySocket(ws);
   });
 });

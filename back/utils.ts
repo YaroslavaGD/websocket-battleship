@@ -1,4 +1,4 @@
-import { WebSocket, WebSocketServer } from 'ws';
+import { WebSocketServer } from 'ws';
 import { Player } from './models/player.model';
 import { Room } from './models/room.model';
 
@@ -48,9 +48,6 @@ export const respond = {
       id,
     }),
 };
-
-export const wsToPlayerMap = new Map<WebSocket, { name: string; index: number }>();
-export const playerIndexToWsMap = new Map<number, WebSocket>();
 
 export function broadcastAll(wss: WebSocketServer, json: string) {
   wss.clients.forEach((client) => {

@@ -2,9 +2,15 @@ import { Player } from '../models/player.model';
 
 const players: Player[] = [];
 
-export function registerPlayer(name: string, password: string): Player | null {
-  const isExisting = players.find((p) => p.name === name);
-  if (isExisting) return null;
+export function registerOrLoginPlayer(name: string, password: string): Player | null {
+  const existingPlayer = players.find((p) => p.name === name);
+  if (existingPlayer) {
+    if (existingPlayer.password !== password) {
+      return null;
+    }
+
+    return existingPlayer;
+  }
 
   const player: Player = {
     name,
