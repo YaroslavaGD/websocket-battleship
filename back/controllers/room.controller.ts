@@ -1,7 +1,7 @@
 import { WebSocket, WebSocketServer } from 'ws';
 import { getSessionBySocket, getSocketByIndex } from '../services/session.service';
 import { addUserToRoom, createRoom, getAvailableRooms, removeRoom } from '../services/room.service';
-import { broadcastAll, logger, respond } from '../utils';
+import { broadcastAll, logger, respond } from '../utils/utils';
 import { AddUserPayload } from '../models/ws-payloads.model';
 
 export function handleCreateRoom(ws: WebSocket, wss: WebSocketServer) {

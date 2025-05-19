@@ -1,6 +1,6 @@
 import { WebSocket, WebSocketServer } from 'ws';
 import { addSession, isPlayerConnected } from '../services/session.service';
-import { broadcastAll, logger, respond } from '../utils';
+import { broadcastAll, logger, respond } from '../utils/utils';
 import { getAllWinners, registerOrLoginPlayer } from '../services/player.service';
 import { getAvailableRooms } from '../services/room.service';
 import { RegPayload } from '../models/ws-payloads.model';

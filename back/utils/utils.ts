@@ -1,7 +1,10 @@
 import { WebSocketServer } from 'ws';
-import { Player } from './models/player.model';
-import { Room } from './models/room.model';
-import { Ship } from './models/ws-payloads.model';
+import { Player } from '../models/player.model';
+import { Room } from '../models/room.model';
+import { Ship } from '../models/ship.model';
+import { GameState } from '../models/game.model';
+import { AttackStatus } from '../models/ws-payloads.model';
+import { getSocketByIndex } from '../services/session.service';
 
 export const logger = {
   info: (msg: string) => console.log(`${msg}`),
@@ -71,6 +74,24 @@ export const respond = {
       data: JSON.stringify({ currentPlayer }),
       id,
     }),
+  attack: (
+    position: { x: number; y: number },
+    currentPlayer: number,
+    status: AttackStatus,
+    id = 0
+  ) =>
+    JSON.stringify({
+      type: 'attack',
+      data: JSON.stringify({ position, currentPlayer, status }),
+      id,
+    }),
+
+  finish: (winPlayer: number, id = 0) =>
+    JSON.stringify({
+      type: 'finish',
+      data: JSON.stringify({ winPlayer }),
+      id,
+    }),
   serverError: (errorText: string, id = 0) =>
     JSON.stringify({
       type: 'error',
@@ -87,6 +108,31 @@ export function broadcastAll(wss: WebSocketServer, json: string) {
     if (client.readyState === 1) {
       console.log('send json = ', json);
       client.send(json);
+    }
+  });
+}
+
+export function broadcastAttackToAll(
+  game: GameState,
+  x: number,
+  y: number,
+  shooterIndex: number,
+  status: AttackStatus
+) {
+  game.players.forEach((player) => {
+    const socket = getSocketByIndex(player.index);
+    if (socket) {
+      socket.send(respond.attack({ x, y }, shooterIndex, status));
+    }
+  });
+}
+
+export function broadcastFinish(game: GameState, winner: number) {
+  game.players.forEach((player) => {
+    const socket = getSocketByIndex(player.index);
+
+    if (socket) {
+      socket.send(respond.finish(winner));
     }
   });
 }

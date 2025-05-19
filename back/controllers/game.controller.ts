@@ -1,16 +1,22 @@
 import { WebSocket } from 'ws';
-import { AddShipPayload } from '../models/ws-payloads.model';
-import { logger, respond } from '../utils';
+import { AddShipPayload, AttackPayload } from '../models/ws-payloads.model';
+import { broadcastAttackToAll, broadcastFinish, logger, respond } from '../utils/utils';
 import {
   addPlayerShipsToGame,
   createGameIfMissing,
   getGameById,
+  getOpponentPlayer,
+  isAllShipsDestroyed,
   isGameReady,
+  markHit,
+  sendTurnToCurrent,
   setRandomStartingPlayer,
+  switchTurn,
+  updateGamePlayer,
 } from '../services/game.service';
 import { getSocketByIndex } from '../services/session.service';
 
-export default function handleAddShips(ws: WebSocket, rawData: unknown) {
+export function handleAddShips(ws: WebSocket, rawData: unknown) {
   let payload: AddShipPayload;
 
   try {
@@ -59,4 +65,51 @@ export default function handleAddShips(ws: WebSocket, rawData: unknown) {
       `[add_ships] Game ${gameId} started with ${game.players.map((p) => p.index).join(', ')}`
     );
   }
+}
+
+export function handleAttack(ws: WebSocket, rawData: unknown) {
+  let payload: AttackPayload;
+  try {
+    payload = JSON.parse(typeof rawData === 'string' ? rawData : '') as AttackPayload;
+
+    logger.info(`[attack] Request: ${JSON.stringify(payload)}`);
+  } catch {
+    ws.send(respond.serverError('Invalid attack format'));
+    return;
+  }
+
+  const { gameId, x, y, indexPlayer } = payload;
+  const game = getGameById(gameId);
+  if (!game) {
+    ws.send(respond.serverError('Game not found'));
+    return;
+  }
+
+  if (game.currentPlayer !== indexPlayer) {
+    ws.send(respond.serverError('Not your turn'));
+    return;
+  }
+
+  const opponent = getOpponentPlayer(game, indexPlayer);
+  if (!opponent) {
+    ws.send(respond.serverError('Opponent not found'));
+    return;
+  }
+
+  const { status, updatedPlayer } = markHit(opponent, x, y);
+  updateGamePlayer(gameId, updatedPlayer);
+
+  broadcastAttackToAll(game, x, y, indexPlayer, status);
+
+  if (isAllShipsDestroyed(updatedPlayer)) {
+    broadcastFinish(game, indexPlayer);
+    logger.success(`[finish] Player ${indexPlayer} won in game ${gameId}`);
+    return;
+  }
+
+  if (status === 'miss') {
+    switchTurn(gameId);
+  }
+
+  sendTurnToCurrent(gameId);
 }

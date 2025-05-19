@@ -1,4 +1,4 @@
-import { Ship } from './ws-payloads.model';
+import { Ship } from './ship.model';
 
 export interface GamePlayer {
   index: number;

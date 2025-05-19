@@ -13,9 +13,11 @@ export interface AddShipPayload {
   ships: [];
 }
 
-export interface Ship {
-  position: { x: number; y: number };
-  direction: boolean;
-  length: number;
-  type: 'small' | 'medium' | 'large' | 'huge';
+export type AttackStatus = 'miss' | 'shot' | 'killed';
+
+export interface AttackPayload {
+  gameId: string;
+  x: number;
+  y: number;
+  indexPlayer: number;
 }
