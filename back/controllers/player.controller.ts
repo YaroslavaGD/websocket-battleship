@@ -3,7 +3,7 @@ import { addSession, isPlayerConnected } from '../services/session.service';
 import { broadcastAll, logger, respond } from '../utils';
 import { getAllWinners, registerOrLoginPlayer } from '../services/player.service';
 import { getAvailableRooms } from '../services/room.service';
-import { RegPayload } from '../models/regPayload.model';
+import { RegPayload } from '../models/ws-payloads.model';
 
 export default function handleRegisterOrLogin(
   ws: WebSocket,
@@ -14,14 +14,16 @@ export default function handleRegisterOrLogin(
 
   try {
     payload = JSON.parse(typeof rawData === 'string' ? rawData : '');
+
+    logger.info(`[reg] Incoming request`);
   } catch {
     ws.send(respond.regError('Invalid registration or login format'));
 
     logger.warn('[reg] Invalid JSON format');
     return;
   }
+
   const { name, password } = payload;
-  logger.info(`[reg] Request from ${name}`);
 
   if (isPlayerConnected(name)) {
     ws.send(respond.regError('User already connected'));
@@ -40,6 +42,7 @@ export default function handleRegisterOrLogin(
 
   addSession(player.name, player.index, ws);
   ws.send(respond.regOk(player));
+
   logger.success(`[reg] ${name} connected`);
 
   broadcastAll(wss, respond.updateWinners(getAllWinners()));

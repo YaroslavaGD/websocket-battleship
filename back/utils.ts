@@ -29,7 +29,15 @@ export const respond = {
       }),
       id,
     }),
-
+  addUserToRoomError: (errorText: string, id = 0) =>
+    JSON.stringify({
+      type: 'add_user_to_room',
+      data: JSON.stringify({
+        error: true,
+        errorText,
+      }),
+      id,
+    }),
   updateWinners: (players: Pick<Player, 'name' | 'wins'>[], id = 0) =>
     JSON.stringify({
       type: 'update_winners',
@@ -48,6 +56,15 @@ export const respond = {
     JSON.stringify({
       type: 'create_game',
       data: JSON.stringify({ idGame, idPlayer }),
+      id,
+    }),
+  serverError: (errorText: string, id = 0) =>
+    JSON.stringify({
+      type: 'error',
+      data: JSON.stringify({
+        error: true,
+        errorText,
+      }),
       id,
     }),
 };

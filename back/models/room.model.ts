@@ -1,5 +1,7 @@
-import { RoomUser } from './roomUser.model';
-
+export interface RoomUser {
+  name: string;
+  index: number;
+}
 export interface Room {
   roomId: number;
   roomUsers: RoomUser[];
