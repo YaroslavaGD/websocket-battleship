@@ -5,7 +5,7 @@
     "main": "index.js",
     "scripts": {
         "start": "node ./index.js",
-        "start:dev": "nodemon ./index.js & npm run start:back",
+        "start:front": "nodemon ./index.js & npm run start:back",
         "start:back": "cross-env NODE_ENV=development ts-node-dev --respawn --transpile-only back/server.ts",
         "lint": "eslint \"back/**/*.{ts,js}\" --fix",
         "format": "prettier --write \"back/**/*.{ts,js,json,md}\"",
