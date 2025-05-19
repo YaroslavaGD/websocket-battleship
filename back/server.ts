@@ -57,3 +57,12 @@ wss.on('connection', (ws: WebSocket) => {
     logger.info('Player disconnected');
   });
 });
+
+process.on('SIGINT', () => {
+  console.log('\n[SHUTDOWN] Stopping WebSocket server...');
+  wss.clients.forEach((client) => client.close());
+  wss.close(() => {
+    console.log('[SHUTDOWN] Server closed.');
+    process.exit(0);
+  });
+});
