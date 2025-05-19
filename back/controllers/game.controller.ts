@@ -1,6 +1,12 @@
 import { WebSocket } from 'ws';
 import { AddShipPayload, AttackPayload } from '../models/ws-payloads.model';
-import { broadcastAttackToAll, broadcastFinish, logger, respond } from '../utils/utils';
+import {
+  broadcastAttackToAll,
+  broadcastFinish,
+  logGamePlayers,
+  logger,
+  respond,
+} from '../utils/utils';
 import {
   addPlayerShipsToGame,
   createGameIfMissing,
@@ -9,6 +15,7 @@ import {
   isAllShipsDestroyed,
   isGameReady,
   markHit,
+  rotateShip,
   sendTurnToCurrent,
   setRandomStartingPlayer,
   switchTurn,
@@ -34,9 +41,9 @@ export function handleAddShips(ws: WebSocket, rawData: unknown) {
   if (!Array.isArray(ships) || !gameId || indexPlayer === undefined) {
     ws.send(respond.serverError('Missing required fields in add_ships'));
   }
-
+  const shipsWithCells = ships.map(rotateShip);
   createGameIfMissing(gameId);
-  addPlayerShipsToGame(gameId, indexPlayer, ships);
+  addPlayerShipsToGame(gameId, indexPlayer, shipsWithCells);
 
   const game = getGameById(gameId);
 
@@ -84,6 +91,8 @@ export function handleAttack(ws: WebSocket, rawData: unknown) {
     ws.send(respond.serverError('Game not found'));
     return;
   }
+  //   logger.info(`[attack] Players in game ${gameId}: ${JSON.stringify(game.players, null, 2)}`);
+  logGamePlayers(gameId, game);
 
   if (game.currentPlayer !== indexPlayer) {
     ws.send(respond.serverError('Not your turn'));
@@ -96,7 +105,16 @@ export function handleAttack(ws: WebSocket, rawData: unknown) {
     return;
   }
 
+  if (!opponent.ships?.length) {
+    logger.error(`[attack] Opponent ${opponent.index} has no ships`);
+    ws.send(respond.serverError('Opponent has no ships'));
+    return;
+  }
+
+  logger.info(`[debug] Calling markHit on opponent: ${JSON.stringify(opponent, null, 2)}`);
   const { status, updatedPlayer } = markHit(opponent, x, y);
+  console.log('Here?');
+  logger.info(`[debug] updatedPlayer: ${JSON.stringify(updatedPlayer, null, 2)}`);
   updateGamePlayer(gameId, updatedPlayer);
 
   broadcastAttackToAll(game, x, y, indexPlayer, status);

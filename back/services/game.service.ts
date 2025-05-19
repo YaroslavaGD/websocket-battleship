@@ -1,7 +1,7 @@
 import { GamePlayer, GameState } from '../models/game.model';
 import { Ship, ShipCell } from '../models/ship.model';
 import { AttackStatus } from '../models/ws-payloads.model';
-import { respond } from '../utils/utils';
+import { logger, respond } from '../utils/utils';
 import { getSocketByIndex } from './session.service';
 
 const games = new Map<string, GameState>();
@@ -70,6 +70,9 @@ export function rotateShip(ship: Omit<Ship, 'cells'>): Ship {
 }
 
 export function markHit(player: GamePlayer, x: number, y: number) {
+  if (!player || !player.ships) {
+    throw new Error('[markHit] Invalid player object');
+  }
   let status: AttackStatus = 'miss';
 
   const updatedShips = player.ships.map((ship) => {
@@ -114,10 +117,14 @@ export function switchTurn(gameId: string): void {
 
 export function updateGamePlayer(gameId: string, updatedPlayer: GamePlayer) {
   const game = games.get(gameId);
-  if (!game) return;
+  if (!game) {
+    logger.error(`[updateGamePlayer] Game ${gameId} not found`);
+    return;
+  }
 
   const players = game.players.map((p) => (p.index === updatedPlayer.index ? updatedPlayer : p));
 
+  logger.info(`[updateGamePlayer] Updated player ${updatedPlayer.index}`);
   games.set(gameId, { ...game, players });
 }
 

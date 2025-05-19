@@ -13,6 +13,13 @@ export const logger = {
   error: (msg: string) => console.error(`${msg}`),
 };
 
+export function logGamePlayers(gameId: string, game: GameState) {
+  logger.info(`[debug] Game ${gameId} players:`);
+  game.players.forEach((p) => {
+    logger.info(`  - Player ${p.index}, ready: ${p.ready}, ships: ${p.ships?.length}`);
+  });
+}
+
 export const respond = {
   regOk: (player: Player, id = 0) =>
     JSON.stringify({
