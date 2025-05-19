@@ -1,6 +1,7 @@
 import { WebSocketServer } from 'ws';
 import { Player } from './models/player.model';
 import { Room } from './models/room.model';
+import { Ship } from './models/ws-payloads.model';
 
 export const logger = {
   info: (msg: string) => console.log(`${msg}`),
@@ -56,6 +57,18 @@ export const respond = {
     JSON.stringify({
       type: 'create_game',
       data: JSON.stringify({ idGame, idPlayer }),
+      id,
+    }),
+  startGame: (ships: Ship[], currentPlayerIndex: number, id = 0) =>
+    JSON.stringify({
+      type: 'start_game',
+      data: JSON.stringify({ ships, currentPlayerIndex }),
+      id,
+    }),
+  turn: (currentPlayer: number, id = 0) =>
+    JSON.stringify({
+      type: 'turn',
+      data: JSON.stringify({ currentPlayer }),
       id,
     }),
   serverError: (errorText: string, id = 0) =>

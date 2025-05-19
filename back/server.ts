@@ -1,21 +1,15 @@
 import { WebSocket, WebSocketServer } from 'ws';
-// import { getAllWinners, registerOrLoginPlayer } from './services/player.service';
 import { logger, respond } from './utils';
-// import { addUserToRoom, createRoom, getAvailableRooms, removeRoom } from './services/room.service';
-import {
-  // addSession,
-  // getSessionBySocket,
-  // getSocketByIndex,
-  // isPlayerConnected,
-  removeSessionBySocket,
-} from './services/session.service';
+import { removeSessionBySocket } from './services/session.service';
 import handleRegisterOrLogin from './controllers/player.controller';
 import { handleAddUserToRoom, handleCreateRoom } from './controllers/room.controller';
+import handleAddShips from './controllers/game.controller';
 
 const REQUEST_TYPE = {
   REG: 'reg',
   CREATE_ROOM: 'create_room',
   ADD_USER_TO_ROOM: 'add_user_to_room',
+  ADD_SHIPS: 'add_ships',
 };
 const PORT = 3000;
 const wss = new WebSocketServer({ port: PORT }, () => {
@@ -42,10 +36,12 @@ wss.on('connection', (ws: WebSocket) => {
       if (type === REQUEST_TYPE.ADD_USER_TO_ROOM) {
         handleAddUserToRoom(ws, data, wss);
       }
+
+      if (type === REQUEST_TYPE.ADD_SHIPS) {
+        handleAddShips(ws, data);
+      }
     } catch (error) {
       respond.serverError('Internal Server Error');
-      console.log(error);
-      logger.error(`[ERROR] Internal Server Error: ${error}`);
       logger.error(`[ERROR] Internal Server Error: ${error}`);
     }
   });
