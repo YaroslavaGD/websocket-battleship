@@ -1,14 +1,15 @@
 import { WebSocket, WebSocketServer } from 'ws';
-import { getAllWinners, registerOrLoginPlayer } from './services/player.service';
+// import { getAllWinners, registerOrLoginPlayer } from './services/player.service';
 import { broadcastAll, respond } from './utils';
 import { addUserToRoom, createRoom, getAvailableRooms, removeRoom } from './services/room.service';
 import {
-  addSession,
+  // addSession,
   getSessionBySocket,
   getSocketByIndex,
-  isPlayerConnected,
+  // isPlayerConnected,
   removeSessionBySocket,
 } from './services/session.service';
+import handleRegisterOrLogin from './controllers/player.controller';
 
 const REQUEST_TYPE = {
   REG: 'reg',
@@ -30,22 +31,21 @@ wss.on('connection', (ws: WebSocket) => {
       const { type, data } = JSON.parse(msg.toString());
 
       if (type === REQUEST_TYPE.REG) {
-        const { name, password } = JSON.parse(data || {});
-        if (isPlayerConnected(name)) {
-          ws.send(respond.regError('User already connected'));
-          return;
-        }
-
-        const player = registerOrLoginPlayer(name, password);
-        if (!player) {
-          ws.send(respond.regError('Incorrect password'));
-          return;
-        }
-
-        addSession(player.name, player.index, ws);
-        ws.send(respond.regOk(player));
-        broadcastAll(wss, respond.updateWinners(getAllWinners()));
-        broadcastAll(wss, respond.updateRoom(getAvailableRooms()));
+        handleRegisterOrLogin(ws, data, wss);
+        // const { name, password } = JSON.parse(data || {});
+        // if (isPlayerConnected(name)) {
+        //   ws.send(respond.regError('User already connected'));
+        //   return;
+        // }
+        // const player = registerOrLoginPlayer(name, password);
+        // if (!player) {
+        //   ws.send(respond.regError('Incorrect password'));
+        //   return;
+        // }
+        // addSession(player.name, player.index, ws);
+        // ws.send(respond.regOk(player));
+        // broadcastAll(wss, respond.updateWinners(getAllWinners()));
+        // broadcastAll(wss, respond.updateRoom(getAvailableRooms()));
       }
 
       if (type === REQUEST_TYPE.CREATE_ROOM) {
@@ -79,7 +79,8 @@ wss.on('connection', (ws: WebSocket) => {
         broadcastAll(wss, respond.updateRoom(getAvailableRooms()));
       }
     } catch (error) {
-      console.error('Error parsing message:', error);
+      console.error('[ERROR] Invalid message:', error);
+      ws.send(JSON.stringify({ type: 'error', data: 'Invalid message format', id: 0 }));
     }
   });
 

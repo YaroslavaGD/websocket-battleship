@@ -2,9 +2,12 @@ import { WebSocketServer } from 'ws';
 import { Player } from './models/player.model';
 import { Room } from './models/room.model';
 
-export function logger(message: string) {
-  console.log(message);
-}
+export const logger = {
+  info: (msg: string) => console.log(`${msg}`),
+  success: (msg: string) => console.log(`${msg}`),
+  warn: (msg: string) => console.warn(`${msg}`),
+  error: (msg: string) => console.error(`${msg}`),
+};
 
 export const respond = {
   regOk: (player: Player, id = 0) =>
